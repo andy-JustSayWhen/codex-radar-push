@@ -1,0 +1,49 @@
+__pycache__/
+*.py[cod]
+.Python
+
+# Local environments and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.*
+secrets.*
+
+.venv/
+venv/
+env/
+
+# Runtime data and generated output
+state/
+logs/
+output/
+cron/output/
+*.log
+*.pid
+*.sqlite
+*.sqlite3
+*.db
+*.bak
+*.backup
+*.tmp
+*.swp
+
+# Test, coverage, and build artifacts
+.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+Thumbs.db
