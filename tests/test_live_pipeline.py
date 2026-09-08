@@ -47,6 +47,15 @@ class LivePipelineTests(unittest.TestCase):
             ), self.assertRaises(ValueError):
                 fetch_intelligence()
 
+    def test_revalidating_cache_refreshes_once_before_formatting(self):
+        with patch("codex_radar_push.core.codex_radar_client._open_url", side_effect=[
+            self.response(self.software, "STALE_REVALIDATING"),
+            self.response(self.software, "COOLDOWN"),
+        ]) as fetch:
+            self.assertEqual(fetch_intelligence(), self.report)
+        self.assertEqual(fetch.call_count, 2)
+        self.assertTrue(fetch.call_args_list[1].args[0].full_url.endswith("?refresh=1"))
+
     def test_three_column_format_matches_user_example(self):
         report = build_report(payload([
             point("gpt-5.6-sol", "xhigh", iq=102.2, minutes=24.6),

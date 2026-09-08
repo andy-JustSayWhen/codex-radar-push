@@ -2,7 +2,7 @@
 
 行为约束见 [功能规格](SPEC-model-discovery.md)，项目架构术语见 [术语表](glossary.md)。
 
-1. 网站读取模块 `core/codex_radar_client.py` 只读取 `/api/intelligence-efficiency-metrics`，校验网站缓存状态及响应结构。
+1. 网站读取模块 `core/codex_radar_client.py` 只读取 `/api/intelligence-efficiency-metrics`，校验网站缓存状态及响应结构。过期缓存触发一次带 `?refresh=1` 参数的读取；使用网站确认有效的结果，二次无效时失败。
 2. 成绩整理模块 `core/intelligence.py` 在记录校验前筛选模型名称前缀 `gpt-`，按模型与档位去重并选择较新成绩。兼容软件工程接口第 3 版和第 2 版有效题量字段；要求有限非负分数及有效题量。
 3. 名称展示去掉 GPT 前缀和带有系列名的版本号，保留纯版本型号；简称发生跨版本冲突时追加版本。按网站模型族顺序及已知推理强度顺序输出，保留未知名称和档位。
 4. 推送排版模块 `core/iq_table.py` 复用三列等宽排版，名称列最小宽度 18，分数列最小宽度 5；中文按双宽计算，名称过长时扩宽。分数使用去尾零格式，分钟数采用非负四舍五入。
