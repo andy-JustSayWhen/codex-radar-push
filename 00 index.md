@@ -18,6 +18,7 @@
 - `scripts/hermes_cron_codex_radar_refresh_watch.py`: Python wrapper copied to `/opt/data/scripts` for Hermes cron.
 - `scripts/codex_radar_query.py`: Hermes keyword query entrypoint.
 - `scripts/codex_radar_iq_table.py`: scheduled Feishu IQ table entrypoint.
+- `scripts/hermes_cron_codex_radar_iq_table.py`: relocatable wrapper installed as the existing scheduled IQ script.
 - `scripts/install_hermes_job.py`: installs the new Hermes cron job and removes the old daily Codex Radar job from `jobs.json`.
 - `hermes_skill/codex-radar/SKILL.md`: Hermes skill instructions for `codex雷达` / `codex额度` / `codex智商` / `codex重置`.
 - `docs/adr/0001-hermes-cron-script-location.md`: records why Hermes cron uses a wrapper under `/opt/data/scripts`.
