@@ -2,6 +2,9 @@
 
 ## Project Files
 
+- `docs/SPEC-model-discovery.md`: complete model discovery and score display behavior.
+- `docs/design-model-discovery.md`: live endpoint normalization, composite scoring and deployment design.
+
 - `codex_radar_push/features/radar_refresh_alert/runner.py`: alert feature workflow, Beijing quiet-hour suppression, auto-refresh message formatting, fenced-code wrapping for single-bubble WeChat delivery, transient fetch timeout handling, and alert cooldown.
 - `codex_radar_push/core/radar_display.py`: compact multiline radar display for Hermes query and refresh messages, including separate IQ recommendations for quality and value.
 - `codex_radar_push/core/iq_table.py`: formats the scheduled IQ push as an aligned monospace block directly from stable `current.json` model data.
