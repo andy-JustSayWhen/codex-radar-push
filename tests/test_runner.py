@@ -20,22 +20,22 @@ class RunnerTests(unittest.TestCase):
             }
         )
 
-    def test_first_run_stores_baseline_without_message(self):
+    def test_first_run_reports_all_sections_and_stores_baseline(self):
         with tempfile.TemporaryDirectory() as tmp:
             state_path = Path(tmp) / "state.json"
 
             changed, message = evaluate_snapshot(self._snapshot(), state_path)
 
-            self.assertEqual(changed, [])
-            self.assertEqual(message, "")
+            self.assertEqual(changed, ["reset", "quota", "iq"])
+            self.assertIn("Codex 雷达刷新", message)
             self.assertTrue(state_path.exists())
 
     def test_changed_section_returns_wechat_message(self):
         with tempfile.TemporaryDirectory() as tmp:
             state_path = Path(tmp) / "state.json"
-            evaluate_snapshot(self._snapshot(), state_path)
+            evaluate_snapshot(self._snapshot(), state_path, now=1000)
 
-            changed, message = evaluate_snapshot(self._snapshot(quota="q2"), state_path)
+            changed, message = evaluate_snapshot(self._snapshot(quota="q2"), state_path, now=3000)
 
             self.assertEqual(changed, ["quota"])
             self.assertIn("Codex 雷达刷新", message)
@@ -46,16 +46,16 @@ class RunnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             state_path = Path(tmp) / "state.json"
             evaluate_snapshot(self._snapshot(), state_path, now=1000)
-            changed, message = evaluate_snapshot(self._snapshot(quota="q2"), state_path, now=2000)
+            changed, message = evaluate_snapshot(self._snapshot(quota="q2"), state_path, now=3000)
             self.assertEqual(changed, ["quota"])
             self.assertIn("q2", message)
 
-            changed, message = evaluate_snapshot(self._snapshot(quota="q3"), state_path, now=2010)
+            changed, message = evaluate_snapshot(self._snapshot(quota="q3"), state_path, now=3010)
 
             self.assertEqual(changed, [])
             self.assertEqual(message, "")
             self.assertNotIn("q3", state_path.read_text(encoding="utf-8"))
-            changed, message = evaluate_snapshot(self._snapshot(quota="q3"), state_path, now=2600)
+            changed, message = evaluate_snapshot(self._snapshot(quota="q3"), state_path, now=4800)
             self.assertEqual(changed, ["quota"])
             self.assertIn("q3", message)
 

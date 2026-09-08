@@ -31,7 +31,7 @@ def save_state(path: Path, snapshot: RadarSnapshot, metadata: dict | None = None
 def changed_sections(state: dict, snapshot: RadarSnapshot) -> list[str]:
     prior_sections = state.get("sections") or {}
     if not prior_sections:
-        return []
+        return list(snapshot.sections)
     changed = []
     for key, section in snapshot.sections.items():
         prior = prior_sections.get(key) or {}

@@ -49,7 +49,7 @@ Forbidden:
 
 ### Features
 
-- `features/radar_refresh_alert/`: scheduled refresh alert workflow. Compares snapshots, persists state through core, and formats change alerts for Hermes delivery. Auto-trigger messages must stay silent during Beijing quiet hours from 23:00 through 06:59; manual query replies are not quiet-hour gated. Auto-trigger messages should be printed once as a compact multiline card, not line-by-line. Transient fetch timeouts must not fail the cron job, and refresh alerts use a 10-minute cooldown that preserves pending changes for the next eligible run.
+- `features/radar_refresh_alert/`: scheduled refresh alert workflow. Compares snapshots, persists state through core, and formats change alerts for Hermes delivery. Auto-trigger messages must stay silent during Beijing quiet hours from 23:00 through 06:59; manual query replies are not quiet-hour gated. Auto-trigger messages should be printed once as a compact multiline card, not line-by-line. Transient fetch timeouts must not fail the cron job, and refresh alerts use a 30-minute cooldown that preserves pending changes for the next eligible run.
 - `features/radar_query/`: on-demand query workflow. Resolves user keywords and formats the requested radar sections.
 
 ### Core

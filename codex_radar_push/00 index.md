@@ -1,6 +1,6 @@
 # 00 Index
 
-- `features/radar_refresh_alert/`: change-detection workflow for Codex Radar refresh alerts; auto-trigger messages skip Beijing quiet hours from 23:00 through 06:59, use a compact multiline card layout wrapped in a fenced text block for single-bubble WeChat delivery, skip transient fetch timeouts, and enforce a 10-minute alert cooldown.
+- `features/radar_refresh_alert/`: change-detection workflow for Codex Radar refresh alerts; auto-trigger messages skip Beijing quiet hours from 23:00 through 06:59, use a compact multiline card layout wrapped in a fenced text block for single-bubble WeChat delivery, skip transient fetch timeouts, and enforce a 30-minute alert cooldown.
 - `features/radar_query/`: on-demand keyword query workflow for Hermes replies.
 - `core/codex_radar_client.py`: fetches HTML and both live intelligence endpoints.
 - `core/radar_display.py`: formats reset, quota, and IQ snapshots into compact Hermes text cards, with full live intelligence tables.

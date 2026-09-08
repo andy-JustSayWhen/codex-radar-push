@@ -82,11 +82,11 @@ class LivePipelineTests(unittest.TestCase):
             saved["last_alert_at"] = 1000
             state.write_text(json.dumps(saved))
             self.assertEqual(evaluate_snapshot(after, state, now=1010), ([], ""))
-            changed, message = evaluate_snapshot(after, state, now=1600)
+            changed, message = evaluate_snapshot(after, state, now=2800)
             self.assertEqual(changed, ["iq"])
             self.assertIn("unreleased-model-99 unknown", message)
             self.assertEqual(message.count("```"), 2)
-            self.assertEqual(evaluate_snapshot(after, state, now=1700), ([], ""))
+            self.assertEqual(evaluate_snapshot(after, state, now=2900), ([], ""))
 
     def test_bad_payload_does_not_advance_watcher_state(self):
         now = datetime(2026, 9, 8, 12, tzinfo=ZoneInfo("Asia/Shanghai")).timestamp()

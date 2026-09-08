@@ -30,12 +30,12 @@
 
 ## Notes
 
-- First watcher run stores baseline and prints nothing.
+- First watcher run reports all sections and stores the baseline.
 - Later runs print only changed radar sections, wrapped in a fenced text block so Hermes WeChat delivery keeps the multiline card in one message bubble.
 - Reset radar auto-alerts are not triggered by judgement time refresh or long prose rewrites alone; they require actionable reset labels/statuses to change.
 - Beijing quiet hours are 23:00 through 06:59; scheduled refresh alerts return empty output and do not fetch during that window.
 - Transient Codex Radar fetch timeouts are skipped silently so Hermes does not send cron failure noise.
-- Refresh alerts have a 10-minute delivery cooldown to avoid WeChat iLink rate limits during bursty radar updates.
+- Refresh alerts have a 30-minute delivery cooldown to avoid WeChat iLink rate limits during bursty radar updates.
 - The scheduled IQ table job delivers printed output to its configured Feishu target.
 - Deploy into the target Hermes data directory configured by the operator.
 - Installer default: `codexradar-refresh-alert`, schedule `5 * * * *`, with the delivery target supplied at runtime. Existing scheduled table jobs retain their configured times.

@@ -10,7 +10,7 @@ from codex_radar_push.core.radar_parser import parse_radar_snapshot
 from codex_radar_push.core.state_store import changed_sections, load_state, save_state
 
 DEFAULT_STATE_PATH = Path("/opt/data/codex-radar-push/state/radar-refresh-state.json")
-MIN_ALERT_INTERVAL_SECONDS = 10 * 60
+MIN_ALERT_INTERVAL_SECONDS = 30 * 60
 QUIET_TIMEZONE = ZoneInfo("Asia/Shanghai")
 QUIET_START_HOUR = 23
 QUIET_END_HOUR = 7
