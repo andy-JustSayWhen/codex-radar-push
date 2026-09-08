@@ -54,10 +54,10 @@ Forbidden:
 
 ### Core
 
-- `core/codex_radar_client.py`: fetches HTML and both live intelligence endpoints; validates current cache responses.
-- `core/intelligence.py`: normalizes all model/effort records and calculates the website-compatible weighted composite. See `docs/SPEC-model-discovery.md` and `docs/design-model-discovery.md`.
-- `core/radar_display.py`: compact Hermes text display for reset and quota, and full intelligence tables for IQ snapshots.
-- `core/iq_table.py`: formats all live intelligence rows into an aligned, unlabeled fenced block with composite and component scores, source timestamps and dynamic column widths.
+- `core/codex_radar_client.py`: fetches HTML and the live software intelligence endpoint; validates current cache responses.
+- `core/intelligence.py`: normalizes all GPT model/effort records. See `docs/SPEC-model-discovery.md` and `docs/design-model-discovery.md`.
+- `core/radar_display.py`: compact Hermes text display for reset and quota, and GPT score tables for IQ snapshots.
+- `core/iq_table.py`: formats all live intelligence rows into an aligned, unlabeled fenced block with model abbreviations, scores and integer minutes.
 - `core/radar_parser.py`: converts reset/quota HTML and normalized intelligence reports into snapshots. Reset fingerprints track actionable status changes. IQ fingerprints track the complete sorted model set and measurements independently of fetch times.
 - `core/state_store.py`: JSON state persistence and fingerprint change detection.
 - `core/models.py`: dataclasses for radar sections and snapshots.

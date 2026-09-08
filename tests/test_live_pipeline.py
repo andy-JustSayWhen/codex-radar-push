@@ -18,9 +18,8 @@ from test_intelligence import payload, point
 
 class LivePipelineTests(unittest.TestCase):
     def setUp(self):
-        self.software = payload([point("gpt-6-astra", "ultra"), point("全新模型-name", "future")])
-        self.visual = payload([point("gpt-6-astra", "ultra", iq=130), point("visual-only", "anything")])
-        self.report = build_report(self.software, self.visual)
+        self.software = payload([point("gpt-6-astra", "ultra"), point("gpt-9-全新模型", "future")])
+        self.report = build_report(self.software)
 
     def response(self, value, cache="HIT"):
         response = io.BytesIO(json.dumps(value).encode())
@@ -32,13 +31,12 @@ class LivePipelineTests(unittest.TestCase):
 
         def fetch(request, timeout):
             paths.append(request.full_url)
-            return self.response(self.visual if request.full_url.endswith("visual-spatial-reasoning") else self.software)
+            return self.response(self.software)
 
         with patch("codex_radar_push.core.codex_radar_client._open_url", side_effect=fetch):
             self.assertEqual(fetch_intelligence(), self.report)
         self.assertEqual(set(paths), {
             "https://codex-reset-radar.pages.dev/api/intelligence-efficiency-metrics",
-            "https://codex-reset-radar.pages.dev/api/visual-spatial-reasoning",
         })
 
     def test_stale_or_unknown_cache_is_not_silently_used(self):
@@ -49,31 +47,49 @@ class LivePipelineTests(unittest.TestCase):
             ), self.assertRaises(ValueError):
                 fetch_intelligence()
 
-    def test_table_has_all_models_full_names_and_aligned_columns(self):
-        message = format_intelligence_table(self.report)
-        self.assertIn("3 个模型 / 3 个档位", message)
-        self.assertEqual(message.count("```"), 2)
-        self.assertNotIn("```text", message)
-        for row in self.report.rows:
-            self.assertEqual(message.count(row.name), 1)
-        table = message.split("```\n")[1].split("\n```")[0].splitlines()
-        self.assertEqual(len({_display_width(line) for line in table}), 1)
-        self.assertIn("115.00", message)
+    def test_three_column_format_matches_user_example(self):
+        report = build_report(payload([
+            point("gpt-5.6-sol", "xhigh", iq=102.2, minutes=24.6),
+            point("gpt-5.6-sol", "max", iq=109, minutes=33.1),
+            point("gpt-5.6-terra", "max", iq=106.3, minutes=32),
+            point("gpt-5.5", "xhigh", iq=106.3, minutes=23),
+            point("other-provider", "high", iq=150),
+        ]))
+        message = format_intelligence_table(report, datetime(2026, 9, 8, 14, 30))
+        self.assertEqual(message, "\n".join([
+            "降智雷达：14:30", "", "```",
+            "模型                 分数  耗时",
+            "Sol max               109  33分钟",
+            "Sol xhigh           102.2  25分钟",
+            "Terra max           106.3  32分钟",
+            "5.5 xhigh           106.3  23分钟",
+            "```",
+        ]))
+
+    def test_new_names_missing_time_and_name_collisions(self):
+        report = build_report(payload([point("gpt-9-future", "unknown", minutes=None),
+                                       point("gpt-10-future", "unknown", iq=0)]))
+        message = format_intelligence_table(report)
+        self.assertIn("9 future unknown", message)
+        self.assertIn("10 future unknown", message)
         self.assertIn("—", message)
-        self.assertIn("工程数据：09-08 16:00", message)
+        self.assertNotIn("综合", message)
+        self.assertNotIn("数据：", message)
+        self.assertEqual(message.count("```"), 2)
 
     def test_iq_query_does_not_depend_on_html_or_model_regex(self):
         with patch("codex_radar_push.features.radar_query.runner.fetch_intelligence", return_value=self.report), patch(
             "codex_radar_push.features.radar_query.runner.fetch_html", side_effect=AssertionError("HTML unnecessary")
         ):
             message = query_latest("codex智商")
-        for row in self.report.rows:
-            self.assertIn(row.name, message)
+        self.assertIn("Astra ultra", message)
+        self.assertIn("全新模型 future", message)
+        self.assertEqual(message, format_intelligence_table(self.report))
 
     def test_new_model_survives_cooldown_and_is_delivered_in_full_table(self):
         before = parse_radar_snapshot({}, "", self.report)
-        updated = payload(self.software["points"] + [point("unreleased-model-99", "unknown")])
-        after = parse_radar_snapshot({}, "", build_report(updated, self.visual))
+        updated = payload(self.software["points"] + [point("gpt-99-unreleased", "unknown")])
+        after = parse_radar_snapshot({}, "", build_report(updated))
         with tempfile.TemporaryDirectory() as directory:
             state = Path(directory) / "state.json"
             evaluate_snapshot(before, state, now=1000)
@@ -84,7 +100,7 @@ class LivePipelineTests(unittest.TestCase):
             self.assertEqual(evaluate_snapshot(after, state, now=1010), ([], ""))
             changed, message = evaluate_snapshot(after, state, now=2800)
             self.assertEqual(changed, ["iq"])
-            self.assertIn("unreleased-model-99 unknown", message)
+            self.assertIn("Unreleased unknown", message)
             self.assertEqual(message.count("```"), 2)
             self.assertEqual(evaluate_snapshot(after, state, now=2900), ([], ""))
 

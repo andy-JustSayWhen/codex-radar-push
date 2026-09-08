@@ -17,6 +17,8 @@ def resolve_query_sections(query: str) -> list[str]:
 
 
 def format_query_response(snapshot, section_keys: list[str]) -> str:
+    if section_keys == ["iq"]:
+        return snapshot.sections["iq"].summary
     return format_radar_message(snapshot, section_keys, "Codex 雷达最新状态")
 
 

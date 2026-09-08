@@ -1,51 +1,55 @@
 from datetime import datetime
 import unicodedata
+import math
+import re
+from collections import Counter
 from zoneinfo import ZoneInfo
 
 from codex_radar_push.core.intelligence import IntelligenceReport
 
 
 def format_intelligence_table(report: IntelligenceReport, now: datetime | None = None) -> str:
-    current_time = now or datetime.now(ZoneInfo("Asia/Shanghai"))
-    lines = [f"智商雷达：{current_time.strftime('%m-%d %H:%M')}（北京时间）",
-             f"共 {len({row.model for row in report.rows})} 个模型 / {len(report.rows)} 个档位",
-             f"工程数据：{_source_time(report.software_updated_at)}",
-             f"视觉数据：{_source_time(report.visual_updated_at)}", "", "```"]
-    rows = [(row.name, _score(row.composite), _score(row.software.score if row.software else None),
-             _score(row.visual.score if row.visual else None),
-             f"{row.minutes:.1f}分" if row.minutes is not None else "—") for row in report.rows]
-    headers = ("模型 / 档位", "综合", "工程", "视觉", "耗时")
-    widths = [max(_display_width(row[i]) for row in [headers, *rows]) for i in range(len(headers))]
-    for row in [headers, *rows]:
-        lines.append("  ".join(_pad_display(value, widths[i]) if i == 0 else _rjust_display(value, widths[i])
-                               for i, value in enumerate(row)))
-    lines.extend(["```", "综合分及耗时按两个分项的有效题量加权；— 表示分项数据未齐全。"])
-    return "\n".join(lines)
+    model_names = {row.model: _short_model_name(row.model) for row in report.rows}
+    counts = Counter(model_names.values())
+    rows = []
+    for row in report.rows:
+        name = model_names[row.model]
+        if counts[name] > 1:
+            name = row.model.removeprefix("gpt-").replace("-", " ")
+        name = f"{name} {row.effort}".strip()
+        minutes = row.software.minutes
+        duration = f"{math.floor(minutes + 0.5)}分钟" if minutes is not None else "—"
+        rows.append((name, row.software.score, duration))
+    return _format_rows(rows, now)
 
 
-def _score(value: float | None) -> str:
-    return "—" if value is None else f"{value:.2f}"
-
-
-def _source_time(value: str) -> str:
-    return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(ZoneInfo("Asia/Shanghai")).strftime("%m-%d %H:%M")
+def _short_model_name(model: str) -> str:
+    name = re.sub(r"^gpt-", "", model, flags=re.IGNORECASE)
+    match = re.fullmatch(r"\d+(?:\.\d+)*(?:-(.+))?", name)
+    if match and match.group(1):
+        return match.group(1).replace("-", " ").title()
+    return name if match else name.replace("-", " ").title()
 
 
 def format_iq_table(model_iq: dict, now: datetime | None = None) -> str:
-    rows = _model_rows(model_iq)
+    return _format_rows(_model_rows(model_iq), now)
+
+
+def _format_rows(rows: list[tuple[str, float, str]], now: datetime | None = None) -> str:
     if not rows:
         raise ValueError("降智雷达没有可用的模型数据")
 
     current_time = now or datetime.now(ZoneInfo("Asia/Shanghai"))
     width = max(18, *(_display_width(row[0]) for row in rows))
+    score_width = max(5, *(len(f"{row[1]:g}") for row in rows))
     lines = [
         f"降智雷达：{current_time.strftime('%H:%M')}",
         "",
         "```",
-        f"{_pad_display('模型', width)}  {_rjust_display('分数', 5)}  耗时",
+        f"{_pad_display('模型', width)}  {_rjust_display('分数', score_width)}  耗时",
     ]
     lines.extend(
-        f"{_pad_display(name, width)}  {_rjust_display(f'{score:g}', 5)}  {duration}"
+        f"{_pad_display(name, width)}  {_rjust_display(f'{score:g}', score_width)}  {duration}"
         for name, score, duration in rows
     )
     lines.append("```")
