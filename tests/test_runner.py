@@ -42,7 +42,7 @@ class RunnerTests(unittest.TestCase):
             self.assertIn("额度雷达", message)
             self.assertIn("q2", message)
 
-    def test_changed_section_inside_cooldown_updates_state_without_message(self):
+    def test_cooldown_keeps_pending_change_for_next_alert(self):
         with tempfile.TemporaryDirectory() as tmp:
             state_path = Path(tmp) / "state.json"
             evaluate_snapshot(self._snapshot(), state_path, now=1000)
@@ -54,7 +54,10 @@ class RunnerTests(unittest.TestCase):
 
             self.assertEqual(changed, [])
             self.assertEqual(message, "")
-            self.assertIn("q3", state_path.read_text(encoding="utf-8"))
+            self.assertNotIn("q3", state_path.read_text(encoding="utf-8"))
+            changed, message = evaluate_snapshot(self._snapshot(quota="q3"), state_path, now=2600)
+            self.assertEqual(changed, ["quota"])
+            self.assertIn("q3", message)
 
     def test_reset_basis_migration_does_not_alert_when_action_matches(self):
         state = {
@@ -157,8 +160,8 @@ class RunnerTests(unittest.TestCase):
         self.assertIn("硬重置：低到中低", message)
 
     def test_run_silently_skips_transient_fetch_timeout(self):
-        with patch("codex_radar_push.features.radar_refresh_alert.runner.fetch_current_json", side_effect=TimeoutError):
-            self.assertEqual(run(), "")
+        with patch("codex_radar_push.features.radar_refresh_alert.runner.fetch_intelligence", side_effect=TimeoutError):
+            self.assertEqual(run(now=self._beijing_timestamp(2026, 9, 8, 12, 0)), "")
 
     def test_quiet_time_uses_beijing_23_to_7_window(self):
         self.assertFalse(is_quiet_time(self._beijing_timestamp(2026, 7, 2, 22, 59)))
@@ -167,7 +170,7 @@ class RunnerTests(unittest.TestCase):
         self.assertFalse(is_quiet_time(self._beijing_timestamp(2026, 7, 3, 7, 0)))
 
     def test_run_skips_fetch_during_quiet_time(self):
-        with patch("codex_radar_push.features.radar_refresh_alert.runner.fetch_current_json") as fetch:
+        with patch("codex_radar_push.features.radar_refresh_alert.runner.fetch_intelligence") as fetch:
             message = run(now=self._beijing_timestamp(2026, 7, 2, 23, 0))
 
             self.assertEqual(message, "")

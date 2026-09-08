@@ -81,9 +81,9 @@ class RadarParserTests(unittest.TestCase):
         iq = snapshot.sections["iq"]
         self.assertEqual(reset.updated_at, "7月2日16:12研判")
         self.assertIn("发重置卡：高 · 基本已触发", reset.summary)
-        self.assertEqual(iq.updated_at, "7月2日15:42更新")
-        self.assertIn("gpt-5.5", iq.summary)
-        self.assertIn("105.0", iq.summary)
+        self.assertEqual(iq.updated_at, "2026-07-02-pm_2")
+        self.assertIn("未知模型", iq.summary)
+        self.assertIn("105", iq.summary)
 
     def test_reset_fingerprint_ignores_time_and_prose_but_tracks_action(self):
         first = parse_radar_snapshot({}, self._reset_html("7月3日08:08研判", "官方信号强。"))
@@ -105,63 +105,18 @@ class RadarParserTests(unittest.TestCase):
         self.assertNotEqual(first_reset.fingerprint, changed_status.sections["reset"].fingerprint)
         self.assertNotEqual(first_reset.fingerprint, changed_signal.sections["reset"].fingerprint)
 
-    def test_parse_iq_section_ignores_readout_class_and_includes_model_cards(self):
-        html = """
-        <figure class="model-iq-readout">
-          <figcaption>7月2日18:06更新</figcaption>
-        </figure>
-        <section class="model-iq model-iq-green" aria-label="Codex 雷达">
-          <div class="model-iq-head">
-            <h2>降智雷达 <span>7月2日15:42更新</span></h2>
-          </div>
-          <p class="model-iq-run-cost-note">本次 Codex 多模型智商测试共消耗等价 $114.56 的 API 费用。可点击卡片筛选要显示的模型。</p>
-          <div class="model-iq-score-chip model-iq-score-chip-primary" data-model-key="gpt_55_xhigh">
-            <span>GPT-5.5-xhigh</span>
-            <div class="model-iq-score-metrics"><strong>105.0</strong><span class="model-iq-score-mini">$37.0</span><span class="model-iq-score-mini">2.2h</span></div>
-          </div>
-          <div class="model-iq-score-chip model-iq-score-chip-comparison" data-model-key="gpt_55_high">
-            <span>GPT-5.5-high</span>
-            <div class="model-iq-score-metrics"><strong>75.0</strong><span class="model-iq-score-mini">$23.5</span><span class="model-iq-score-mini">1.5h</span></div>
-          </div>
-        </section>
-        """
-
-        snapshot = parse_radar_snapshot(
-            {
-                "model_iq": {
-                    "latest": {
-                        "date": "2026-07-02-pm_2",
-                        "score": 105.0,
-                        "status": "green",
-                        "passed": 7,
-                        "tasks": 10,
-                    },
-                    "recent_days": [
-                        {"date": "2026-07-01-pm", "score": 60.0, "status": "red", "passed": 4, "tasks": 10},
-                        {"date": "2026-07-02-pm_2", "score": 105.0, "status": "green", "passed": 7, "tasks": 10},
-                    ],
-                    "comparisons": {
-                        "gpt_55_high": {
-                            "latest": {
-                                "date": "2026-07-02-pm_2",
-                                "score": 75.0,
-                                "status": "red",
-                                "passed": 5,
-                                "tasks": 10,
-                            }
-                        }
-                    },
-                }
+    def test_iq_legacy_snapshot_uses_all_structured_rows_without_html_cards(self):
+        snapshot = parse_radar_snapshot({"model_iq": {
+            "latest": {"model": "future-primary", "score": 100, "date": "2026-09-08"},
+            "comparisons": {
+                "another-model": {"label": "Future model", "latest": {"score": 0}},
             },
-            html,
-        )
-
+        }}, "<section class='changed-layout'>stale model names</section>")
         iq = snapshot.sections["iq"]
-        self.assertEqual(iq.updated_at, "7月2日15:42更新")
-        self.assertIn("本次 Codex 多模型智商测试共消耗等价 $114.56 的 API 费用。", iq.summary)
-        self.assertIn("GPT-5.5-xhigh 105.0 (green) 7/10 费用 $37.0 耗时 2.2h", iq.summary)
-        self.assertIn("GPT-5.5-high 75.0 (red) 5/10 费用 $23.5 耗时 1.5h", iq.summary)
-        self.assertIn("GPT-5.5-xhigh近5次", iq.summary)
+        self.assertIn("future-primary", iq.summary)
+        self.assertIn("Future model", iq.summary)
+        self.assertNotIn("stale model names", iq.summary)
+        self.assertEqual(iq.updated_at, "2026-09-08")
 
     def _reset_html(self, updated_at, description, reset_status="高 · 基本已触发", signal="发卡路径占优"):
         return f"""

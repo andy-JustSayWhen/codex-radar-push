@@ -1,4 +1,4 @@
-from codex_radar_push.core.codex_radar_client import fetch_current_json, fetch_html
+from codex_radar_push.core.codex_radar_client import fetch_intelligence, fetch_html
 from codex_radar_push.core.radar_display import format_radar_message
 from codex_radar_push.core.radar_parser import parse_radar_snapshot
 
@@ -21,7 +21,8 @@ def format_query_response(snapshot, section_keys: list[str]) -> str:
 
 
 def query_latest(query: str = "") -> str:
-    current = fetch_current_json()
-    html = fetch_html()
-    snapshot = parse_radar_snapshot(current, html)
-    return format_query_response(snapshot, resolve_query_sections(query))
+    sections = resolve_query_sections(query)
+    intelligence = fetch_intelligence() if "iq" in sections else None
+    html = fetch_html() if any(key in sections for key in ("quota", "reset")) else ""
+    snapshot = parse_radar_snapshot({}, html, intelligence)
+    return format_query_response(snapshot, sections)

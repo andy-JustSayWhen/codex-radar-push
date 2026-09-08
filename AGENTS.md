@@ -49,15 +49,16 @@ Forbidden:
 
 ### Features
 
-- `features/radar_refresh_alert/`: scheduled refresh alert workflow. Compares snapshots, persists state through core, and formats change alerts for Hermes delivery. Auto-trigger messages must stay silent during Beijing quiet hours from 23:00 through 06:59; manual query replies are not quiet-hour gated. Auto-trigger messages should be printed once as a compact multiline card, not line-by-line. Transient fetch timeouts must not fail the cron job, and refresh alerts use a 10-minute cooldown to avoid WeChat iLink rate limits.
+- `features/radar_refresh_alert/`: scheduled refresh alert workflow. Compares snapshots, persists state through core, and formats change alerts for Hermes delivery. Auto-trigger messages must stay silent during Beijing quiet hours from 23:00 through 06:59; manual query replies are not quiet-hour gated. Auto-trigger messages should be printed once as a compact multiline card, not line-by-line. Transient fetch timeouts must not fail the cron job, and refresh alerts use a 10-minute cooldown that preserves pending changes for the next eligible run.
 - `features/radar_query/`: on-demand query workflow. Resolves user keywords and formats the requested radar sections.
 
 ### Core
 
-- `core/codex_radar_client.py`: HTTP fetch for Codex Radar HTML and `current.json`.
-- `core/radar_display.py`: compact Hermes text display for reset, quota, and IQ radar snapshots. IQ output should keep separate recommendation lines for quality-first and value-first model choices.
-- `core/iq_table.py`: scheduled Feishu IQ formatter. It must use structured `current.json` model data rather than HTML class names that can drift, and emit an aligned monospace block instead of a Markdown table.
-- `core/radar_parser.py`: converts Codex Radar HTML/JSON into structured radar snapshots. Reset radar fingerprints must ignore judgement time refreshes and long prose rewrites; auto-alerts should only fire when actionable reset labels/statuses change.
+- `core/codex_radar_client.py`: fetches HTML and both live intelligence endpoints; validates current cache responses.
+- `core/intelligence.py`: normalizes all model/effort records and calculates the website-compatible weighted composite. See `docs/SPEC-model-discovery.md` and `docs/design-model-discovery.md`.
+- `core/radar_display.py`: compact Hermes text display for reset and quota, and full intelligence tables for IQ snapshots.
+- `core/iq_table.py`: formats all live intelligence rows into an aligned, unlabeled fenced block with composite and component scores, source timestamps and dynamic column widths.
+- `core/radar_parser.py`: converts reset/quota HTML and normalized intelligence reports into snapshots. Reset fingerprints track actionable status changes. IQ fingerprints track the complete sorted model set and measurements independently of fetch times.
 - `core/state_store.py`: JSON state persistence and fingerprint change detection.
 - `core/models.py`: dataclasses for radar sections and snapshots.
 
@@ -99,7 +100,7 @@ Configure deployment paths through environment variables. Do not place `AGENTS.m
 - Hermes data directory: `HERMES_DATA_DIR`
 - delivery target: `CODEX_RADAR_DELIVERY_TARGET`
 
-Current Hermes cron job:
+Installer defaults for a new refresh watcher (existing deployments retain their configured schedules):
 
 - name: `codexradar-refresh-alert`
 - schedule: `5 * * * *`

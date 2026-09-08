@@ -6,10 +6,10 @@
 - `docs/design-model-discovery.md`: live endpoint normalization, composite scoring and deployment design.
 
 - `codex_radar_push/features/radar_refresh_alert/runner.py`: alert feature workflow, Beijing quiet-hour suppression, auto-refresh message formatting, fenced-code wrapping for single-bubble WeChat delivery, transient fetch timeout handling, and alert cooldown.
-- `codex_radar_push/core/radar_display.py`: compact multiline radar display for Hermes query and refresh messages, including separate IQ recommendations for quality and value.
-- `codex_radar_push/core/iq_table.py`: formats the scheduled IQ push as an aligned monospace block directly from stable `current.json` model data.
-- `codex_radar_push/core/codex_radar_client.py`: HTTP fetch for HTML and `current.json`.
-- `codex_radar_push/core/radar_parser.py`: reset, quota, and IQ radar parsing; reset change fingerprints ignore judgement time and long prose, and track only actionable reset labels/statuses, while IQ replies include the current multi-model score cards and recent GPT-5.5-xhigh trend.
+- `codex_radar_push/core/radar_display.py`: compact multiline radar display for Hermes query and refresh messages, including full live intelligence tables.
+- `codex_radar_push/core/iq_table.py`: formats all live model scores and component data as an aligned monospace block.
+- `codex_radar_push/core/codex_radar_client.py`: fetches HTML and both live intelligence endpoints.
+- `codex_radar_push/core/radar_parser.py`: reset, quota, and IQ radar parsing; reset change fingerprints ignore judgement time and long prose, and track only actionable reset labels/statuses, while IQ replies include the complete normalized model set.
 - `codex_radar_push/core/state_store.py`: JSON state load/save and change detection.
 - `codex_radar_push/core/models.py`: radar snapshot and section dataclasses.
 - `codex_radar_push/shared/text.py`: pure HTML/text helpers, including exact `<section>` class-token extraction.
@@ -26,6 +26,8 @@
 - `knowledge/消息渠道的选择.md`: channel selection, runtime target configuration, delivery verification, and privacy boundaries.
 - `knowledge/消息格式及示例.md`: Feishu-safe monospace formatting rules and examples.
 
+- `codex_radar_push/core/intelligence.py`: complete model discovery and weighted composite calculations.
+
 ## Notes
 
 - First watcher run stores baseline and prints nothing.
@@ -36,5 +38,5 @@
 - Refresh alerts have a 10-minute delivery cooldown to avoid WeChat iLink rate limits during bursty radar updates.
 - The scheduled IQ table job delivers printed output to its configured Feishu target.
 - Deploy into the target Hermes data directory configured by the operator.
-- Hermes job name: `codexradar-refresh-alert`, schedule `5 * * * *`, with the delivery target supplied at runtime.
+- Installer default: `codexradar-refresh-alert`, schedule `5 * * * *`, with the delivery target supplied at runtime. Existing scheduled table jobs retain their configured times.
 - Removed old job `codexradar-model-iq`; old script was backed up before removal.

@@ -41,9 +41,9 @@ class IqTableTests(unittest.TestCase):
                     "",
                     "```",
                     "模型                 分数  耗时",
-                    "Sol max             107.6  35分钟",
-                    "Sol xhigh            92.8  28分钟",
-                    "Terra max           102.2  34分钟",
+                    "gpt-5.6-sol max     107.6  35分钟",
+                    "GPT-5.6 Sol xhigh    92.8  28分钟",
+                    "GPT-5.6 Terra max   102.2  34分钟",
                     "GPT-5.5 high         79.4  16分钟",
                     "```",
                 ]

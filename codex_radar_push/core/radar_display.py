@@ -64,6 +64,8 @@ def _format_quota(section: RadarSection) -> list[str]:
 
 
 def _format_iq(section: RadarSection) -> list[str]:
+    if section.summary.startswith(("智商雷达：", "降智雷达：")):
+        return section.summary.splitlines()
     lines = [f"智商雷达  {_section_time(section.updated_at)}"]
     cost = re.search(r"本次 Codex 多模型智商测试共消耗等价 (\$[\d.]+) 的 API 费用", section.summary)
     if cost:
