@@ -72,6 +72,8 @@ def _reset_signal(section: str) -> str:
 
 def _parse_quota(html: str) -> RadarSection:
     section = html_section(html, "quota-radar")
+    if not section:
+        return _parse_subscription_quota(html)
     text = strip_tags(section)
 
     updated_at = ""
@@ -102,6 +104,19 @@ def _parse_quota(html: str) -> RadarSection:
 
     summary_parts = rows + [part for part in (trend, recent_trend, formula) if part]
     summary = "\n".join(summary_parts) if summary_parts else collapse_spaces(text)[:240]
+    return RadarSection("quota", "额度雷达", updated_at, summary)
+
+
+def _parse_subscription_quota(html: str) -> RadarSection:
+    section = html_section(html, "sq-hero")
+    text = collapse_spaces(strip_tags(section))
+    match = re.search(r"订阅额度 · (.+?)\s+≈\s*([0-9,.]+)\s*(刀/周)", text)
+    if not match:
+        return RadarSection("quota", "额度雷达", "", "雷达站暂未提供可读的额度数据。", "")
+    header = re.search(r'<header class="sq-head">.*?<time[^>]*>([^<]+)</time>', html, re.DOTALL)
+    updated_at = header.group(1) if header else ""
+    plan, amount, unit = match.groups()
+    summary = f"{plan}：约 {amount} {unit}\n按历史观测估算，非实时余额或官方固定额度。"
     return RadarSection("quota", "额度雷达", updated_at, summary)
 
 
