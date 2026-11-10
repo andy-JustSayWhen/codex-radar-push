@@ -21,40 +21,24 @@ class LivePipelineTests(unittest.TestCase):
         self.software = payload([point("gpt-6-astra", "ultra"), point("gpt-9-全新模型", "future")])
         self.report = build_report(self.software)
 
-    def response(self, value, cache="HIT"):
-        response = io.BytesIO(json.dumps(value).encode())
-        response.headers = {"X-Codex-Cache": cache}
-        return response
-
-    def test_real_endpoint_contract_and_no_legacy_fetch(self):
-        paths = []
-
-        def fetch(request, timeout):
-            paths.append(request.full_url)
-            return self.response(self.software)
-
-        with patch("codex_radar_push.core.codex_radar_client._open_url", side_effect=fetch):
-            self.assertEqual(fetch_intelligence(), self.report)
-        self.assertEqual(set(paths), {
-            "https://codex-reset-radar.pages.dev/api/intelligence-efficiency-metrics",
-        })
-
-    def test_stale_or_unknown_cache_is_not_silently_used(self):
-        for status in ("STALE", "STALE-IF-ERROR", "ERROR", ""):
-            with self.subTest(status=status), patch(
-                "codex_radar_push.core.codex_radar_client._open_url",
-                side_effect=lambda *a, **kw: self.response(self.software, status),
-            ), self.assertRaises(ValueError):
-                fetch_intelligence()
-
-    def test_revalidating_cache_refreshes_once_before_formatting(self):
-        with patch("codex_radar_push.core.codex_radar_client._open_url", side_effect=[
-            self.response(self.software, "STALE_REVALIDATING"),
-            self.response(self.software, "COOLDOWN"),
-        ]) as fetch:
-            self.assertEqual(fetch_intelligence(), self.report)
-        self.assertEqual(fetch.call_count, 2)
-        self.assertTrue(fetch.call_args_list[1].args[0].full_url.endswith("?refresh=1"))
+    def test_fetches_only_public_page_and_filters_luna(self):
+        scores = {
+            "protocol": "codex-four-weighted-150-v2",
+            "author_test_interval": {"completed_at": "2026-11-10T13:31:50+00:00"},
+            "rows": [
+                {"model": model, "effort": "high", "score150": 120, "model_elapsed_seconds": 600}
+                for model in ("gpt-6-sol", "gpt-6-luna")
+            ],
+        }
+        html = '<script id="home-overview-data">' + json.dumps({"scores": scores}) + '</script>'
+        with patch("codex_radar_push.core.codex_radar_client._open_url", return_value=io.BytesIO(html.encode())) as fetch:
+            report = fetch_intelligence()
+        self.assertEqual(fetch.call_count, 1)
+        self.assertEqual(fetch.call_args.args[0].full_url, "https://codex-reset-radar.pages.dev/")
+        table = format_intelligence_table(report)
+        self.assertIn("满分150", table)
+        self.assertIn("10分钟", table)
+        self.assertNotIn("luna", table.lower())
 
     def test_three_column_format_matches_user_example(self):
         report = build_report(payload([
