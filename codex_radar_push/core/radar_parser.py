@@ -19,6 +19,8 @@ def parse_radar_snapshot(current_json: dict[str, Any], html: str, intelligence: 
 
 def _parse_reset(html: str) -> RadarSection:
     section = html_section(html, "reset-judgement")
+    if not section:
+        return _parse_monthly_reset(html)
     text = strip_tags(section)
 
     updated_at = ""
@@ -37,6 +39,20 @@ def _parse_reset(html: str) -> RadarSection:
 
     change_basis = _reset_change_basis(section, cards, text)
     return RadarSection("reset", "重置雷达", updated_at, "\n".join(cards), change_basis)
+
+
+def _parse_monthly_reset(html: str) -> RadarSection:
+    section = html_section(html, "desktop-tibo-radar")
+    month = re.search(r'class="trm-now-label">([0-9]+月)', section)
+    counts = re.findall(
+        r'class="trm-tile trm-tile-(?:direct|card)"><span>([^<]+)</span><strong>([0-9]+)</strong>',
+        section,
+    )
+    if not month or len(counts) != 2:
+        return RadarSection("reset", "重置雷达", "", "雷达站暂未提供可读的重置数据。", "")
+    updated = re.search(r'class="tibo-radar-monthly-updated">([^<]+)', section)
+    summary = "\n".join([month.group(1) + "统计", *(f"{label}：{count}次" for label, count in counts)])
+    return RadarSection("reset", "重置雷达", updated.group(1) if updated else "", summary, summary)
 
 
 def _reset_change_basis(section: str, cards: list[str], text: str) -> str:
