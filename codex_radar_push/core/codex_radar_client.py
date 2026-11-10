@@ -7,7 +7,7 @@ from urllib.request import Request, urlopen
 from codex_radar_push.core.intelligence import build_public_report
 
 
-DEFAULT_BASE_URL = "https://codex-reset-radar.pages.dev"
+DEFAULT_BASE_URL = "https://codexradar.com"
 
 
 def fetch_intelligence(base_url: str = DEFAULT_BASE_URL, timeout: int = 30):

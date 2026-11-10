@@ -34,7 +34,7 @@ class LivePipelineTests(unittest.TestCase):
         with patch("codex_radar_push.core.codex_radar_client._open_url", return_value=io.BytesIO(html.encode())) as fetch:
             report = fetch_intelligence()
         self.assertEqual(fetch.call_count, 1)
-        self.assertEqual(fetch.call_args.args[0].full_url, "https://codex-reset-radar.pages.dev/")
+        self.assertEqual(fetch.call_args.args[0].full_url, "https://codexradar.com/")
         table = format_intelligence_table(report)
         self.assertIn("满分150", table)
         self.assertIn("测试结束 2026-11-10 21:31", table)
