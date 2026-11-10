@@ -67,8 +67,10 @@ def _measurements(payload: dict, task_field: str, label: str) -> dict:
         if not isinstance(point, dict):
             raise ValueError(f"{label}成绩记录格式无效")
         model, effort = point.get("model"), point.get("effort")
-        if isinstance(model, str) and not model.strip().lower().startswith("gpt-"):
-            continue
+        if isinstance(model, str):
+            normalized = model.strip().lower()
+            if not normalized.startswith("gpt-") or "luna" in normalized.split("-"):
+                continue
         if not isinstance(model, str) or not model.strip() or not isinstance(effort, str):
             raise ValueError(f"{label}成绩缺少模型或档位")
         if any(char in model + effort for char in "\r\n\t`"):

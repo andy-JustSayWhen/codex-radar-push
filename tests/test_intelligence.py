@@ -17,6 +17,7 @@ def payload(points):
 class IntelligenceTests(unittest.TestCase):
     def test_all_gpt_models_and_unknown_efforts_are_included(self):
         report = build_report(payload([point(), point("claude-test", iq="irrelevant"),
+                                       point("GPT-6-Luna", "high"), point("gpt-9-luna-preview", "max"),
                                        point("gpt-6-astra", "max"), point("gpt-5.5", "high")]))
         self.assertEqual(len(report.rows), 3)
         self.assertEqual({r.model for r in report.rows}, {"gpt-9-future", "gpt-6-astra", "gpt-5.5"})
