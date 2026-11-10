@@ -37,6 +37,7 @@ class LivePipelineTests(unittest.TestCase):
         self.assertEqual(fetch.call_args.args[0].full_url, "https://codex-reset-radar.pages.dev/")
         table = format_intelligence_table(report)
         self.assertIn("满分150", table)
+        self.assertIn("测试结束 2026-11-10 21:31", table)
         self.assertIn("10分钟", table)
         self.assertNotIn("luna", table.lower())
 

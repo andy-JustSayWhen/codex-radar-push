@@ -20,7 +20,7 @@ def format_intelligence_table(report: IntelligenceReport, now: datetime | None =
         minutes = row.software.minutes
         duration = f"{math.floor(minutes + 0.5)}分钟" if minutes is not None else "—"
         rows.append((name, row.software.score, duration))
-    return _format_rows(rows, now, report.score_label)
+    return _format_rows(rows, now, report.score_label, report.software_updated_at)
 
 
 def _short_model_name(model: str) -> str:
@@ -35,15 +35,22 @@ def format_iq_table(model_iq: dict, now: datetime | None = None) -> str:
     return _format_rows(_model_rows(model_iq), now)
 
 
-def _format_rows(rows: list[tuple[str, float, str]], now: datetime | None = None, score_label: str = "") -> str:
+def _format_rows(rows: list[tuple[str, float, str]], now: datetime | None = None, score_label: str = "", source_time: str = "") -> str:
     if not rows:
         raise ValueError("降智雷达没有可用的模型数据")
 
     current_time = now or datetime.now(ZoneInfo("Asia/Shanghai"))
     width = max(18, *(_display_width(row[0]) for row in rows))
     score_width = max(5, *(len(f"{row[1]:g}") for row in rows))
+    title = f"降智雷达：{current_time.strftime('%H:%M')}"
+    if score_label:
+        title = f"降智雷达（{score_label}）"
+        if source_time:
+            tested_at = datetime.fromisoformat(source_time.replace("Z", "+00:00"))
+            tested_at = tested_at.astimezone(ZoneInfo("Asia/Shanghai"))
+            title += f"｜测试结束 {tested_at:%Y-%m-%d %H:%M}（北京时间）"
     lines = [
-        f"降智雷达：{current_time.strftime('%H:%M')}" + (f"（{score_label}）" if score_label else ""),
+        title,
         "",
         "```",
         f"{_pad_display('模型', width)}  {_rjust_display('分数', score_width)}  耗时",

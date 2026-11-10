@@ -58,13 +58,13 @@ def _report_from_measurements(measurements, updated_at, score_label="") -> Intel
 def build_public_report(scores: dict) -> IntelligenceReport:
     if scores.get("protocol") != "codex-four-weighted-150-v2":
         raise ValueError("公开智商榜单格式无效")
-    updated_at = scores["author_test_interval"]["completed_at"]
+    updated_at = (scores.get("author_test_interval") or {}).get("completed_at") or ""
     points = []
     for row in scores["rows"]:
         seconds = _number(row.get("model_elapsed_seconds"))
         points.append(dict(model=row["model"], effort=row["effort"], iq=row["score150"],
                            total=1, average_minutes=seconds / 60 if seconds is not None else None))
-    measurements = _measurements(dict(points=points, source_updated_at=updated_at), "total", "公开智商榜")
+    measurements = _measurements(dict(points=points, source_updated_at=updated_at), "total", "公开智商榜", allow_missing_time=True)
     return _report_from_measurements(measurements, updated_at, "公开榜单总分／满分150")
 
 
@@ -76,10 +76,10 @@ def _updated_at(payload: dict) -> str:
     return value
 
 
-def _measurements(payload: dict, task_field: str, label: str) -> dict:
+def _measurements(payload: dict, task_field: str, label: str, *, allow_missing_time: bool = False) -> dict:
     if not isinstance(payload, dict) or not isinstance(payload.get("points"), list):
         raise ValueError(f"{label}数据格式无效")
-    updated_at = _updated_at(payload)
+    updated_at = "" if allow_missing_time and not payload.get("source_updated_at") else _updated_at(payload)
     result = {}
     for point in payload["points"]:
         if not isinstance(point, dict):
@@ -100,9 +100,9 @@ def _measurements(payload: dict, task_field: str, label: str) -> dict:
         row = Measurement(score, tasks, _number(point.get("average_minutes")),
                           point.get("source_updated_at") or point.get("latest_graded_at") or updated_at)
         key = (model.strip(), effort.strip())
-        timestamp = _timestamp(row.updated_at)
+        timestamp = _timestamp(row.updated_at) if row.updated_at else float("-inf")
         previous = result.get(key)
-        if previous is None or timestamp > _timestamp(previous.updated_at):
+        if previous is None or timestamp > (_timestamp(previous.updated_at) if previous.updated_at else float("-inf")):
             result[key] = row
         elif timestamp == _timestamp(previous.updated_at) and row != previous:
             raise ValueError(f"{label}存在同时间的冲突成绩")
