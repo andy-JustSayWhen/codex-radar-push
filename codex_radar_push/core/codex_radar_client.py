@@ -1,17 +1,29 @@
 import json
+import re
 import ssl
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from codex_radar_push.core.intelligence import build_report
+from codex_radar_push.core.intelligence import build_public_report, build_report
 
 
 DEFAULT_BASE_URL = "https://codex-reset-radar.pages.dev"
 
 
 def fetch_intelligence(base_url: str = DEFAULT_BASE_URL, timeout: int = 30):
-    payload = _fetch_live_json(base_url.rstrip("/") + "/api/intelligence-efficiency-metrics", timeout)
-    return build_report(payload)
+    try:
+        payload = _fetch_live_json(base_url.rstrip("/") + "/api/intelligence-efficiency-metrics", timeout)
+        return build_report(payload)
+    except HTTPError as error:
+        if error.code < 500:
+            raise
+    except (URLError, TimeoutError, ValueError):
+        pass
+    html = fetch_html(base_url, timeout)
+    match = re.search(r'<script\b[^>]*\bid="home-overview-data"[^>]*>(.*?)</script>', html, re.DOTALL)
+    if not match:
+        raise ValueError("雷达站没有提供可用的智商数据")
+    return build_public_report(json.loads(match.group(1))["scores"])
 
 
 def _fetch_live_json(url: str, timeout: int, refresh: bool = False) -> dict:

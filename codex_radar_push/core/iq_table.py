@@ -20,7 +20,7 @@ def format_intelligence_table(report: IntelligenceReport, now: datetime | None =
         minutes = row.software.minutes
         duration = f"{math.floor(minutes + 0.5)}分钟" if minutes is not None else "—"
         rows.append((name, row.software.score, duration))
-    return _format_rows(rows, now)
+    return _format_rows(rows, now, report.score_label)
 
 
 def _short_model_name(model: str) -> str:
@@ -35,7 +35,7 @@ def format_iq_table(model_iq: dict, now: datetime | None = None) -> str:
     return _format_rows(_model_rows(model_iq), now)
 
 
-def _format_rows(rows: list[tuple[str, float, str]], now: datetime | None = None) -> str:
+def _format_rows(rows: list[tuple[str, float, str]], now: datetime | None = None, score_label: str = "") -> str:
     if not rows:
         raise ValueError("降智雷达没有可用的模型数据")
 
@@ -43,7 +43,7 @@ def _format_rows(rows: list[tuple[str, float, str]], now: datetime | None = None
     width = max(18, *(_display_width(row[0]) for row in rows))
     score_width = max(5, *(len(f"{row[1]:g}") for row in rows))
     lines = [
-        f"降智雷达：{current_time.strftime('%H:%M')}",
+        f"降智雷达：{current_time.strftime('%H:%M')}" + (f"（{score_label}）" if score_label else ""),
         "",
         "```",
         f"{_pad_display('模型', width)}  {_rjust_display('分数', score_width)}  耗时",

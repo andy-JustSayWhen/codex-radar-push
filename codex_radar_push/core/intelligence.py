@@ -28,13 +28,14 @@ class ModelScore:
 class IntelligenceReport:
     rows: tuple[ModelScore, ...]
     software_updated_at: str
+    score_label: str = ""
 
     @property
     def change_basis(self) -> str:
         rows = [(row.model, row.effort, row.software.score,
                  math.floor(row.software.minutes + 0.5) if row.software.minutes is not None else None)
                 for row in self.rows]
-        return json.dumps(sorted(rows), ensure_ascii=False, allow_nan=False)
+        return json.dumps([self.score_label, sorted(rows)], ensure_ascii=False, allow_nan=False)
 
 
 def build_report(software: dict) -> IntelligenceReport:
@@ -43,11 +44,28 @@ def build_report(software: dict) -> IntelligenceReport:
         raise ValueError("软件工程数据格式已变化，请检查网站接口")
     task_field = "total" if schema[0] == 3 else "weighted_total"
     measurements = _measurements(software, task_field, "GPT 智商")
+    return _report_from_measurements(measurements, _updated_at(software))
+
+
+def _report_from_measurements(measurements, updated_at, score_label="") -> IntelligenceReport:
     model_order = {model: index for index, model in enumerate(dict.fromkeys(key[0] for key in measurements))}
     efforts = {effort: index for index, effort in enumerate(("ultra", "max", "xhigh", "high", "medium", "low", "off"))}
     keys = sorted(measurements, key=lambda key: (model_order[key[0]], efforts.get(key[1], len(efforts)), key[1]))
     rows = tuple(ModelScore(model, effort, measurements[(model, effort)]) for model, effort in keys)
-    return IntelligenceReport(rows, _updated_at(software))
+    return IntelligenceReport(rows, updated_at, score_label)
+
+
+def build_public_report(scores: dict) -> IntelligenceReport:
+    if scores.get("protocol") != "codex-four-weighted-150-v2":
+        raise ValueError("公开智商榜单格式无效")
+    updated_at = scores["author_test_interval"]["completed_at"]
+    points = []
+    for row in scores["rows"]:
+        seconds = _number(row.get("model_elapsed_seconds"))
+        points.append(dict(model=row["model"], effort=row["effort"], iq=row["score150"],
+                           total=1, average_minutes=seconds / 60 if seconds is not None else None))
+    measurements = _measurements(dict(points=points, source_updated_at=updated_at), "total", "公开智商榜")
+    return _report_from_measurements(measurements, updated_at, "公开榜单总分／满分150")
 
 
 def _updated_at(payload: dict) -> str:
